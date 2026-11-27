@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}新規登録 - project2{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>新規登録</h2>
+    <p id="error-message" class="error-message" hidden></p>
+
+    <form id="register-form">
+        <label for="username">ユーザー名</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+
+        <label for="password">パスワード（8文字以上）</label>
+        <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+
+        <button type="submit">登録する</button>
+    </form>
+
+    <p class="switch-link">
+        既にアカウントがある場合は <a href="/login">ログイン</a>
+    </p>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/register.js"></script>
+{% endblock %}

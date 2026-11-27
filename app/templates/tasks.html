@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}タスク一覧 - project2{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="tasks-header">
+        <!-- ログイン中ユーザー名はJS側で /auth/me を呼んで埋め込む -->
+        <p>ログイン中: <span id="current-username">...</span></p>
+        <button id="logout-button" type="button">ログアウト</button>
+    </div>
+
+    <p id="error-message" class="error-message" hidden></p>
+
+    <!-- タスク新規作成フォーム -->
+    <form id="task-create-form" class="task-create-form">
+        <input type="text" id="task-title" name="title" placeholder="タスクのタイトル" required maxlength="200">
+        <input type="text" id="task-description" name="description" placeholder="詳細（任意）">
+        <input type="date" id="task-due-date" name="due_date">
+        <button type="submit">追加</button>
+    </form>
+
+    <!-- タスク一覧がここにJSで動的に挿入される -->
+    <ul id="task-list" class="task-list"></ul>
+</div>
+
+<!-- タスク1件分の表示テンプレート。JS側で <template> の内容をコピーして使う -->
+<!-- 通常時は「表示モード」（task-view）を見せ、編集ボタンを押すと「編集モード」（task-edit-form）に切り替える。 -->
+<template id="task-item-template">
+    <li class="task-item">
+        <input type="checkbox" class="task-done-checkbox">
+
+        <!-- 表示モード: タイトル・詳細・期限をテキストとして見せる -->
+        <div class="task-body task-view">
+            <span class="task-title"></span>
+            <span class="task-description"></span>
+            <span class="task-due-date"></span>
+        </div>
+
+        <!-- 編集モード: 最初は hidden にしておき、編集ボタンを押したときだけ表示する -->
+        <form class="task-body task-edit-form" hidden>
+            <input type="text" class="task-edit-title" required maxlength="200">
+            <input type="text" class="task-edit-description" placeholder="詳細（任意）">
+            <input type="date" class="task-edit-due-date">
+            <div class="task-edit-buttons">
+                <button type="submit" class="task-edit-save-button">保存</button>
+                <button type="button" class="task-edit-cancel-button">キャンセル</button>
+            </div>
+        </form>
+
+        <div class="task-actions">
+            <button type="button" class="task-edit-button">編集</button>
+            <button type="button" class="task-delete-button">削除</button>
+        </div>
+    </li>
+</template>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/tasks.js"></script>
+{% endblock %}
