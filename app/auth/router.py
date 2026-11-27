@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import SESSION_KEY, get_current_user
 from app.auth.models import User
-from app.auth.schemas import UserCreate, UserLogin
+from app.auth.schemas import AccountDelete, UserCreate, UserLogin
 from app.auth.security import hash_password, verify_password
 from app.database import get_db
 
@@ -61,3 +61,30 @@ def logout(request: Request):
 def read_current_user(current_user: User = Depends(get_current_user)):
     """現在ログイン中のユーザー情報を返す。未ログインなら get_current_user が401を返す。"""
     return {"id": current_user.id, "username": current_user.username}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(
+    body: AccountDelete,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    ログイン中のユーザー自身のアカウントを削除する。
+    誤操作・第三者による削除を防ぐため、パスワードの再入力による本人確認を必須とする。
+    User.tasks に cascade="all, delete-orphan" を設定しているため（app/auth/models.py）、
+    ユーザーを削除すると紐づくタスクもDB側で自動的に削除される。
+    """
+    if not verify_password(body.password, current_user.hashed_password):
+        # パスワード不一致。ログイン失敗時と違い、ここでは「ログイン済みの本人かどうか」の
+        # 確認なので 403 Forbidden を返す（401は「そもそも誰か分からない」場合に使う）。
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password")
+
+    db.delete(current_user)
+    db.commit()
+
+    # アカウントを削除した以上、このセッション（ログイン状態）も無効化する。
+    request.session.pop(SESSION_KEY, None)
+
+    return None

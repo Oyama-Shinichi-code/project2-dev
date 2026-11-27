@@ -5,7 +5,10 @@
     <div class="tasks-header">
         <!-- ログイン中ユーザー名はJS側で /auth/me を呼んで埋め込む -->
         <p>ログイン中: <span id="current-username">...</span></p>
-        <button id="logout-button" type="button">ログアウト</button>
+        <div class="tasks-header-buttons">
+            <button id="logout-button" type="button">ログアウト</button>
+            <button id="delete-account-button" type="button" class="danger-button">アカウント削除</button>
+        </div>
     </div>
 
     <p id="error-message" class="error-message" hidden></p>
@@ -20,6 +23,27 @@
 
     <!-- タスク一覧がここにJSで動的に挿入される -->
     <ul id="task-list" class="task-list"></ul>
+</div>
+
+<!--
+    アカウント削除の確認ダイアログ。普段は hidden で隠しておき、
+    「アカウント削除」ボタンを押したときだけ表示する（誤操作防止のため2段階確認にしている）。
+-->
+<div id="delete-account-modal" class="modal-overlay" hidden>
+    <div class="modal-box">
+        <h3>アカウントを削除しますか？</h3>
+        <p>この操作は取り消せません。登録したタスクもすべて削除されます。本人確認のため、パスワードを入力してください。</p>
+        <p id="delete-account-error" class="error-message" hidden></p>
+
+        <form id="delete-account-form">
+            <label for="delete-account-password">パスワード</label>
+            <input type="password" id="delete-account-password" required autocomplete="current-password">
+            <div class="task-edit-buttons">
+                <button type="submit" class="danger-button">削除する</button>
+                <button type="button" id="delete-account-cancel-button">キャンセル</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- タスク1件分の表示テンプレート。JS側で <template> の内容をコピーして使う -->
@@ -53,6 +77,6 @@
     </li>
 </template>
 
-<script src="/static/js/api.js"></script>
-<script src="/static/js/tasks.js"></script>
+<script src="/static/js/api.js?v={{ static_version('js/api.js') }}"></script>
+<script src="/static/js/tasks.js?v={{ static_version('js/tasks.js') }}"></script>
 {% endblock %}

@@ -17,3 +17,12 @@ class UserLogin(BaseModel):
 
     username: str
     password: str
+
+
+class AccountDelete(BaseModel):
+    """
+    アカウント削除時に受け取るデータの形。
+    誤操作・第三者による意図しない削除を防ぐため、本人確認用にパスワードの再入力を必須とする。
+    """
+
+    password: str

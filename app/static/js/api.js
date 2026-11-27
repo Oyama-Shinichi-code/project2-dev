@@ -50,6 +50,8 @@ const api = {
 
     me: () => apiRequest("/api/auth/me", "GET"),
 
+    deleteAccount: (password) => apiRequest("/api/auth/me", "DELETE", { password }),
+
     listTasks: () => apiRequest("/api/tasks", "GET"),
 
     createTask: (title, description, dueDate) =>

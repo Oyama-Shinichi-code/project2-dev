@@ -7,6 +7,14 @@ const taskCreateForm = document.getElementById("task-create-form");
 const taskListEl = document.getElementById("task-list");
 const taskItemTemplate = document.getElementById("task-item-template");
 
+// アカウント削除まわりの要素。
+const deleteAccountButton = document.getElementById("delete-account-button");
+const deleteAccountModal = document.getElementById("delete-account-modal");
+const deleteAccountForm = document.getElementById("delete-account-form");
+const deleteAccountPasswordInput = document.getElementById("delete-account-password");
+const deleteAccountCancelButton = document.getElementById("delete-account-cancel-button");
+const deleteAccountErrorEl = document.getElementById("delete-account-error");
+
 function showError(message) {
     errorMessageEl.textContent = message;
     errorMessageEl.hidden = false;
@@ -186,6 +194,36 @@ taskCreateForm.addEventListener("submit", async (event) => {
 logoutButton.addEventListener("click", async () => {
     await api.logout();
     window.location.href = "/login";
+});
+
+// 「アカウント削除」ボタンを押したら確認モーダルを表示する。
+deleteAccountButton.addEventListener("click", () => {
+    deleteAccountPasswordInput.value = "";
+    deleteAccountErrorEl.hidden = true;
+    deleteAccountModal.hidden = false;
+});
+
+// モーダルの「キャンセル」ボタンでモーダルを閉じる。
+deleteAccountCancelButton.addEventListener("click", () => {
+    deleteAccountModal.hidden = true;
+});
+
+// モーダルの確認フォーム（パスワード入力→削除する）の送信処理。
+deleteAccountForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const result = await api.deleteAccount(deleteAccountPasswordInput.value);
+
+    if (result.ok) {
+        // アカウント削除が成功したら、ログイン画面に戻す。
+        window.location.href = "/login";
+    } else {
+        // パスワードが違う場合（403）など、モーダル内にエラーを表示する
+        // （画面全体のエラー欄ではなく、モーダル内の専用エラー欄を使う）。
+        const detail = result.data && result.data.detail ? result.data.detail : "アカウントの削除に失敗しました";
+        deleteAccountErrorEl.textContent = detail;
+        deleteAccountErrorEl.hidden = false;
+    }
 });
 
 // ページが読み込まれたタイミングで、ユーザー情報とタスク一覧を取得する。
