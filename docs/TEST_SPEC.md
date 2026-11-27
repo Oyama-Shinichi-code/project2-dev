@@ -51,11 +51,23 @@
 | `test_update_task_marks_as_done` | タスクの完了フラグ（`is_done`）を部分更新（`PATCH /api/tasks/{id}`）できる。更新リクエストに含めなかった項目（タイトル等）は変化しない。 |
 | `test_delete_task` | タスクを削除（`DELETE /api/tasks/{id}`）すると、一覧から消える。 |
 | `test_user_cannot_access_other_users_task` | 他ユーザーが作成したタスクは、一覧に出てこない。IDを直接指定して更新・削除しようとしても404エラーになる（存在自体を教えない）。**アクセス制御の中核となる最重要テスト。** |
+| `test_tasks_default_to_due_date_sort_with_unset_dates_last` | デフォルトのソート方法（`"due_date"`）では期限日の昇順に並び、期限未設定のタスクは常に最後に表示される。 |
+| `test_sort_preference_title_orders_by_title` | ソート方法を `"title"` に変更すると、タスク名の昇順（辞書順）で一覧が返る。 |
+| `test_sort_preference_is_persisted_and_returned_by_me` | 設定したソート方法はDBに保存され、`GET /api/auth/me` が返すユーザー情報にも反映される（別端末からログインしても同じ設定が復元されることの裏付け）。 |
+| `test_new_task_is_appended_to_end_of_manual_order` | 手動並び替え（`"manual"`）のとき、新規作成したタスクは常に一覧の最後尾に追加される。 |
+| `test_reorder_tasks_updates_manual_order` | 並び替えAPI（`PATCH /api/tasks/reorder`）に新しい順序のタスクID配列を渡すと、手動並び替え（`"manual"`）での一覧順がその通りになる。 |
+| `test_reorder_tasks_rejects_other_users_task_id` | 並び替えAPIに他ユーザーのタスクIDが混ざっている場合は404エラーになり、不正な並び替えが行われない。 |
 
 ### このコードから分かる仕様（補足）
 - タスク一覧は常にログイン中ユーザー自身のものだけが返る（他ユーザーのタスクは混在しない）。
 - タスクのタイトルは必須、詳細（description）と期限（due_date）は任意。
 - 更新APIは「指定したフィールドだけ」を変更する部分更新方式（PATCH）。
+- タスク一覧の並び順は、ユーザーの `sort_preference` 設定（`"due_date"` / `"title"` / `"manual"`）に従って `GET /api/tasks` がサーバー側でソートして返す。
+  - `"due_date"`（デフォルト）: 期限日の昇順。期限未設定のタスクは常に最後。
+  - `"title"`: タスク名の昇順。
+  - `"manual"`: `sort_order` 列の昇順（ドラッグ&ドロップで並び替えた順）。
+- ソート方法の変更は `PATCH /api/auth/me/sort-preference` で行い、DBに保存される（ブラウザのlocalStorageではなくユーザーアカウントに紐づけることで、別端末からログインしても同じ並び順が復元される）。
+- 手動並び替えの結果は `PATCH /api/tasks/reorder` に「並び替え後の新しい順序のタスクID配列」を渡して保存する。リクエストに含まれるIDの集合が、ログイン中ユーザー自身の全タスクIDの集合と完全に一致しない場合は404エラーになる。
 
 ---
 

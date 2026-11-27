@@ -8,7 +8,7 @@ from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.database import get_db
 from app.tasks.models import Task
-from app.tasks.schemas import TaskCreate, TaskOut, TaskUpdate
+from app.tasks.schemas import TaskCreate, TaskOut, TaskReorderRequest, TaskUpdate
 
 # "/api" プレフィックスにより、画面用の /tasks（app/views.py）と衝突しないようにしている。
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
@@ -33,11 +33,22 @@ def create_task(
     db: Session = Depends(get_db),
 ):
     """新しいタスクを作成する。作成者は常にログイン中のユーザー自身になる。"""
+    # 手動並び替え（sort_order）では、新規タスクは常に一覧の最後尾に追加されるようにする。
+    # 既存タスクの最大値+1を割り当てることで、過去のタスクより後ろに来るようにする。
+    max_sort_order = (
+        db.query(Task.sort_order)
+        .filter(Task.user_id == current_user.id)
+        .order_by(Task.sort_order.desc())
+        .first()
+    )
+    next_sort_order = (max_sort_order[0] + 1) if max_sort_order else 0
+
     new_task = Task(
         user_id=current_user.id,
         title=task_in.title,
         description=task_in.description,
         due_date=task_in.due_date,
+        sort_order=next_sort_order,
     )
     db.add(new_task)
     db.commit()
@@ -50,14 +61,59 @@ def list_tasks(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """ログイン中ユーザー自身のタスクのみを一覧取得する（他ユーザーのタスクは絶対に含めない）。"""
-    tasks = (
+    """
+    ログイン中ユーザー自身のタスクのみを一覧取得する（他ユーザーのタスクは絶対に含めない）。
+    並び順はユーザーの sort_preference 設定（日付順・タスク名順・手動順）に従う。
+    """
+    query = db.query(Task).filter(Task.user_id == current_user.id)
+
+    if current_user.sort_preference == "title":
+        # タスク名の昇順（あいうえお順・アルファベット順）。
+        query = query.order_by(Task.title.asc())
+    elif current_user.sort_preference == "manual":
+        # ユーザーがドラッグ&ドロップで並び替えた順（sort_orderの昇順）。
+        query = query.order_by(Task.sort_order.asc())
+    else:
+        # デフォルト（"due_date"）: 期限日の昇順。
+        # 期限未設定（NULL）のタスクは常に最後に表示したいが、SQLiteのデフォルトでは
+        # NULLは昇順で最初に来てしまうため、「期限未設定かどうか」を先にソートキーにして回避する。
+        query = query.order_by(Task.due_date.is_(None).asc(), Task.due_date.asc())
+
+    tasks = query.all()
+    return tasks
+
+
+@router.patch("/reorder", response_model=list[TaskOut])
+def reorder_tasks(
+    body: TaskReorderRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    ドラッグ&ドロップで並び替えた結果（新しい順序のタスクID配列）を受け取り、
+    各タスクの sort_order を更新する。手動並び替え（"manual"）の記憶に使う。
+    他ユーザーのタスクIDが混ざっていないかも確認し、不正な場合は404を返す。
+    """
+    tasks_by_id = {
+        task.id: task
+        for task in db.query(Task).filter(Task.user_id == current_user.id).all()
+    }
+
+    # リクエストに含まれる全IDが、本当にログイン中ユーザー自身のタスクかを確認する。
+    if set(body.task_ids) != set(tasks_by_id.keys()):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    for index, task_id in enumerate(body.task_ids):
+        tasks_by_id[task_id].sort_order = index
+
+    db.commit()
+
+    return (
         db.query(Task)
         .filter(Task.user_id == current_user.id)
-        .order_by(Task.created_at.desc())
+        .order_by(Task.sort_order.asc())
         .all()
     )
-    return tasks
 
 
 @router.patch("/{task_id}", response_model=TaskOut)

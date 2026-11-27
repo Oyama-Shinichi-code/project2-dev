@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import SESSION_KEY, get_current_user
 from app.auth.models import User
-from app.auth.schemas import AccountDelete, UserCreate, UserLogin
+from app.auth.schemas import AccountDelete, SortPreferenceUpdate, UserCreate, UserLogin
 from app.auth.security import hash_password, verify_password
 from app.database import get_db
 
@@ -60,7 +60,27 @@ def logout(request: Request):
 @router.get("/me")
 def read_current_user(current_user: User = Depends(get_current_user)):
     """現在ログイン中のユーザー情報を返す。未ログインなら get_current_user が401を返す。"""
-    return {"id": current_user.id, "username": current_user.username}
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "sort_preference": current_user.sort_preference,
+    }
+
+
+@router.patch("/me/sort-preference")
+def update_sort_preference(
+    body: SortPreferenceUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    タスク一覧のソート方法（日付順・タスク名順・手動順）をユーザーに紐づけて保存する。
+    どの端末からログインしても同じソート方法が復元されるようにするため、
+    ブラウザのlocalStorageではなくDBに保存する。
+    """
+    current_user.sort_preference = body.sort_preference
+    db.commit()
+    return {"sort_preference": current_user.sort_preference}
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

@@ -31,6 +31,11 @@ class User(Base):
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
 
+    # タスク一覧の並び替え方法のユーザー設定。
+    # "due_date"（期限日順）, "title"（タスク名順）, "manual"（ドラッグ&ドロップで並べた順）のいずれか。
+    # ログイン端末が変わっても同じ並び順で見れるよう、DBに保存してユーザーに紐づける。
+    sort_preference: Mapped[str] = mapped_column(String(20), default="due_date", nullable=False)
+
     # このユーザーが持つタスク一覧（1人のユーザーに対して複数のタスク = 1対多）。
     # cascade="all, delete-orphan" により、ユーザーを削除すると紐づくタスクも自動的に削除される。
     tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")

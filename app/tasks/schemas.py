@@ -34,9 +34,20 @@ class TaskOut(BaseModel):
     description: str | None
     due_date: date | None
     is_done: bool
+    sort_order: int
     created_at: datetime
     updated_at: datetime
 
     # SQLAlchemyのモデルインスタンス（ORMオブジェクト）から直接このスキーマを
     # 作れるようにするための設定（from_attributes=True が無いと辞書しか受け付けない）。
     model_config = ConfigDict(from_attributes=True)
+
+
+class TaskReorderRequest(BaseModel):
+    """
+    手動並び替え（ドラッグ&ドロップ）の結果を保存する際に受け取るデータの形。
+    task_ids は「並び替え後の新しい順序」でタスクIDを並べた配列。
+    先頭が一番上に表示されるタスクになる。
+    """
+
+    task_ids: list[int] = Field(min_length=1)

@@ -33,6 +33,11 @@ class Task(Base):
     # 完了フラグ。デフォルトは未完了（False）。
     is_done: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # 手動並び替え（ドラッグ&ドロップ）用の表示順。値が小さいほど上に表示する。
+    # 作成時は作成順（＝created_at降順と同じ見た目になるよう大きい値）を割り当て、
+    # ユーザーがドラッグ&ドロップで並び替えたときにこの値を更新する。
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )

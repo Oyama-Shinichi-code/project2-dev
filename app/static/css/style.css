@@ -164,6 +164,22 @@ form button:hover {
     margin-bottom: 16px;
 }
 
+/* ソート方法（並び順）を選ぶプルダウンのエリア */
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.sort-controls select {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
 /* タスク新規作成フォームは横並びにする */
 .task-create-form {
     display: flex;
@@ -206,6 +222,34 @@ form button:hover {
     gap: 12px;
     padding: 10px 0;
     border-bottom: 1px solid #eee;
+}
+
+/*
+ ドラッグハンドル（≡アイコン）。
+ 手動順（"manual"）のとき以外はJS側でdisplay: noneにして隠す
+ （掴めないのに表示されていると誤操作を誘うため）。
+*/
+.task-drag-handle {
+    display: none;
+    cursor: grab;
+    color: #999;
+    font-size: 16px;
+    user-select: none;
+}
+
+/* 手動順（"manual"）選択時、タスク一覧全体にこのクラスを付与してハンドルを表示する */
+.task-list.is-manual-sort .task-drag-handle {
+    display: inline-block;
+}
+
+/* ドラッグ中のタスク行を半透明にして、どれを掴んでいるか分かりやすくする */
+.task-item.is-dragging {
+    opacity: 0.4;
+}
+
+/* ドラッグ中に、ドロップ先候補の行の上に区切り線を表示する */
+.task-item.drag-over-top {
+    border-top: 2px solid #2d6a4f;
 }
 
 .task-body {

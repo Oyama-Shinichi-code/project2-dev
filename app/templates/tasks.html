@@ -13,6 +13,16 @@
 
     <p id="error-message" class="error-message" hidden></p>
 
+    <!-- タスクの並び順を選ぶプルダウン。選択結果はDBに保存され、別端末からログインしても復元される。 -->
+    <div class="sort-controls">
+        <label for="sort-preference-select">並び順:</label>
+        <select id="sort-preference-select">
+            <option value="due_date">期限日順（期限なしは最後）</option>
+            <option value="title">タスク名順</option>
+            <option value="manual">手動順（ドラッグ&ドロップで並び替え）</option>
+        </select>
+    </div>
+
     <!-- タスク新規作成フォーム -->
     <form id="task-create-form" class="task-create-form">
         <input type="text" id="task-title" name="title" placeholder="タスクのタイトル" required maxlength="200">
@@ -50,6 +60,8 @@
 <!-- 通常時は「表示モード」（task-view）を見せ、編集ボタンを押すと「編集モード」（task-edit-form）に切り替える。 -->
 <template id="task-item-template">
     <li class="task-item">
+        <!-- 手動順（"manual"）のときだけJS側でこのハンドルを掴んでドラッグ&ドロップできるようにする。 -->
+        <span class="task-drag-handle" title="ドラッグして並び替え">&#x2630;</span>
         <input type="checkbox" class="task-done-checkbox">
 
         <!-- 表示モード: タイトル・詳細・期限をテキストとして見せる -->

@@ -52,7 +52,12 @@ const api = {
 
     deleteAccount: (password) => apiRequest("/api/auth/me", "DELETE", { password }),
 
+    updateSortPreference: (sortPreference) =>
+        apiRequest("/api/auth/me/sort-preference", "PATCH", { sort_preference: sortPreference }),
+
     listTasks: () => apiRequest("/api/tasks", "GET"),
+
+    reorderTasks: (taskIds) => apiRequest("/api/tasks/reorder", "PATCH", { task_ids: taskIds }),
 
     createTask: (title, description, dueDate) =>
         apiRequest("/api/tasks", "POST", {
